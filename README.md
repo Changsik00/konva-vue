@@ -1,24 +1,8 @@
-# konva-vue
+# Konva
+https://konvajs.org/
 
-## Project setup
-```
-yarn install
-```
+## Konva-vue
+```bash
+ yarn add vue-konva konva 
 
-### Compiles and hot-reloads for development
 ```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
