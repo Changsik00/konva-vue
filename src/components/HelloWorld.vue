@@ -2,7 +2,7 @@
   <v-stage ref="stage" :config="stageSize" @mousedown="handleStageMouseDown" @touchstart="handleStageMouseDown">
     <v-layer ref="layer">
       <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
-      <v-image :config="{ image: image, name: 'yoda', draggable: true }" @transformend="handleTransformEnd" />
+      <v-image :config="image" @transformend="handleTransformEnd" />
       <v-transformer ref="transformer" />
     </v-layer>
   </v-stage>
@@ -46,7 +46,7 @@ export default {
           draggable: true
         }
       ],
-      image: null,
+      image: { image: null, name: "yoda", draggable: true, x: 300, y: 300, width: 100, height: 100 },
       selectedShapeName: ""
     }
   },
@@ -54,7 +54,7 @@ export default {
     const image = new window.Image()
     image.src = "https://konvajs.org/assets/yoda.jpg"
     image.onload = () => {
-      this.image = image
+      this.image.image = image
     }
   },
   methods: {
