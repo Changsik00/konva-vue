@@ -14,6 +14,7 @@
       </v-layer>
     </v-stage>
     <button @click="toJson">toJson</button>
+    <button @click="downloadImage">downloadImage</button>
   </section>
 </template>
 
@@ -68,8 +69,9 @@ export default {
     }
   },
   created() {
-    const image = new window.Image()
+    const image = new Image()
     image.src = "https://konvajs.org/assets/yoda.jpg"
+    image.crossOrigin = "anonymous" // https://stackoverflow.com/questions/22710627/tainted-canvases-may-not-be-exported
     image.onload = () => {
       this.image.image = image
     }
@@ -136,6 +138,20 @@ export default {
     toJson() {
       console.log("#@# this.stage", this.stage)
       console.log("#@# toJson", this.stage.toJSON())
+    },
+    makeImageAndDownload(uri, name) {
+      const link = document.createElement("a")
+      link.download = name
+      link.href = uri
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
+    downloadImage() {
+      const dataURL = this.stage.toDataURL({ pixelRatio: 3 })
+      console.log("#@# dataURL", this.stage.toDataURL)
+      console.log("#@# dataURL", dataURL)
+      this.makeImageAndDownload(dataURL, "image.png")
     }
   }
 }
