@@ -1,21 +1,24 @@
 <template>
-  <v-stage
-    class="stage"
-    ref="stage"
-    :config="stageSize"
-    @mousedown="handleStageMouseDown"
-    @touchstart="handleStageMouseDown"
-  >
-    <v-layer ref="layer">
-      <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
-      <v-image :config="image" @transformend="handleTransformEnd" />
-      <v-transformer ref="transformer" />
-    </v-layer>
-  </v-stage>
+  <section>
+    <v-stage
+      class="stage"
+      ref="stage"
+      :config="stageSize"
+      @mousedown="handleStageMouseDown"
+      @touchstart="handleStageMouseDown"
+    >
+      <v-layer ref="layer">
+        <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
+        <v-image :config="image" @transformend="handleTransformEnd" />
+        <v-transformer ref="transformer" />
+      </v-layer>
+    </v-stage>
+    <button @click="toJson">toJson</button>
+  </section>
 </template>
 
 <script>
-import Konva from "konva"
+// import Konva from "konva"
 // const width = window.innerWidth
 // const height = window.innerHeight
 
@@ -56,6 +59,14 @@ export default {
       selectedShapeName: ""
     }
   },
+  computed: {
+    stage() {
+      return this.$refs.stage?.getNode()
+    },
+    transformer() {
+      return this.$refs.transformer?.getNode()
+    }
+  },
   created() {
     const image = new window.Image()
     image.src = "https://konvajs.org/assets/yoda.jpg"
@@ -76,7 +87,7 @@ export default {
       rect.scaleY = e.target.scaleY()
 
       // change fill
-      rect.fill = Konva.Util.getRandomColor()
+      // rect.fill = Konva.Util.getRandomColor()
     },
     handleStageMouseDown(e) {
       // clicked on stage - clear selection
@@ -94,8 +105,7 @@ export default {
 
       // find clicked rect by its name
       const name = e.target.name()
-      const stage = this.$refs.stage.getNode()
-      const transformerTraget = stage.find(r => r.name === name)
+      const transformerTraget = this.stage.find(r => r.name === name)
       if (transformerTraget) {
         this.selectedShapeName = name
       } else {
@@ -105,12 +115,11 @@ export default {
     },
     updateTransformer() {
       // here we need to manually attach or detach Transformer node
-      const transformerNode = this.$refs.transformer.getNode()
+      const transformerNode = this.transformer
       // const stage = transformerNode.getStage();
-      const stage = this.$refs.stage.getNode()
       const { selectedShapeName } = this
 
-      const selectedNode = stage.findOne("." + selectedShapeName)
+      const selectedNode = this.stage.findOne("." + selectedShapeName)
       // do nothing if selected node is already attached
       if (selectedNode === transformerNode.node()) {
         return
@@ -123,6 +132,10 @@ export default {
         // remove transformer
         transformerNode.nodes([])
       }
+    },
+    toJson() {
+      console.log("#@# this.stage", this.stage)
+      console.log("#@# toJson", this.stage.toJSON())
     }
   }
 }
