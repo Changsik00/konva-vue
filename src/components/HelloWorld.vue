@@ -78,10 +78,7 @@ export default {
   },
   methods: {
     handleTransformEnd(e) {
-      // shape is transformed, let us save new attrs back to the node
-      // find element in our state
       const rect = this.rectangles.find(r => r.name === this.selectedShapeName)
-      // update the state
       rect.x = e.target.x()
       rect.y = e.target.y()
       rect.rotation = e.target.rotation()
@@ -92,20 +89,17 @@ export default {
       // rect.fill = Konva.Util.getRandomColor()
     },
     handleStageMouseDown(e) {
-      // clicked on stage - clear selection
       if (e.target === e.target.getStage()) {
         this.selectedShapeName = ""
         this.updateTransformer()
         return
       }
 
-      // clicked on transformer - do nothing
       const clickedOnTransformer = e.target.getParent().className === "Transformer"
       if (clickedOnTransformer) {
         return
       }
 
-      // find clicked rect by its name
       const name = e.target.name()
       const transformerTraget = this.stage.find(r => r.name === name)
       if (transformerTraget) {
@@ -116,27 +110,21 @@ export default {
       this.updateTransformer()
     },
     updateTransformer() {
-      // here we need to manually attach or detach Transformer node
-      const transformerNode = this.transformer
-      // const stage = transformerNode.getStage();
-      const { selectedShapeName } = this
-
-      const selectedNode = this.stage.findOne("." + selectedShapeName)
-      // do nothing if selected node is already attached
-      if (selectedNode === transformerNode.node()) {
+      const selectedNode = this.stage.findOne("." + this.selectedShapeName)
+      if (selectedNode === this.transformer.node()) {
         return
       }
 
       if (selectedNode) {
-        // attach to another node
-        transformerNode.nodes([selectedNode])
+        this.transformer.nodes([selectedNode])
       } else {
-        // remove transformer
-        transformerNode.nodes([])
+        this.clearTransformer()
       }
     },
+    clearTransformer() {
+      this.transformer.nodes([])
+    },
     toJson() {
-      console.log("#@# this.stage", this.stage)
       console.log("#@# toJson", this.stage.toJSON())
     },
     makeImageAndDownload(uri, name) {
@@ -148,9 +136,8 @@ export default {
       document.body.removeChild(link)
     },
     downloadImage() {
+      this.clearTransformer()
       const dataURL = this.stage.toDataURL({ pixelRatio: 3 })
-      console.log("#@# dataURL", this.stage.toDataURL)
-      console.log("#@# dataURL", dataURL)
       this.makeImageAndDownload(dataURL, "image.png")
     }
   }
