@@ -1,5 +1,11 @@
 <template>
-  <v-stage ref="stage" :config="stageSize" @mousedown="handleStageMouseDown" @touchstart="handleStageMouseDown">
+  <v-stage
+    class="stage"
+    ref="stage"
+    :config="stageSize"
+    @mousedown="handleStageMouseDown"
+    @touchstart="handleStageMouseDown"
+  >
     <v-layer ref="layer">
       <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
       <v-image :config="image" @transformend="handleTransformEnd" />
@@ -10,15 +16,15 @@
 
 <script>
 import Konva from "konva"
-const width = window.innerWidth
-const height = window.innerHeight
+// const width = window.innerWidth
+// const height = window.innerHeight
 
 export default {
   data() {
     return {
       stageSize: {
-        width: width,
-        height: height
+        width: 1000,
+        height: 500
       },
       rectangles: [
         {
@@ -122,4 +128,11 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.stage {
+  width: 1000px;
+  height: 500px;
+  border: 1px solid red;
+  margin: auto;
+}
+</style>

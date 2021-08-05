@@ -12,7 +12,7 @@
     "konva": "^8.1.1",
     "vue": "^2.6.11",
     "vue-konva": "^2.1.7"
-  }, 
+  },
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "7.12.7",
     "@vue/cli-plugin-babel": "~4.5.0",
@@ -23,6 +23,8 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-vue": "^7.15.1",
+    "node-sass": "^6.0.1",
+    "sass-loader": "^10",
     "vue-template-compiler": "^2.6.11"
   },
   "eslintConfig": {
@@ -39,8 +41,8 @@
       "parser": "babel-eslint"
     },
     "rules": {}
-  }, 
-  "browserslist": [ 
+  },
+  "browserslist": [
     "> 1%",
     "last 2 versions",
     "not dead"
