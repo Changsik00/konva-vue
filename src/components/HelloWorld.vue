@@ -10,7 +10,7 @@
       <v-layer ref="layer">
         <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
         <v-image :config="image" @transformend="handleTransformEnd" />
-        <v-transformer ref="transformer" />
+        <v-transformer @dragend="handleStageDragEnd" ref="transformer" />
       </v-layer>
     </v-stage>
     <button @click="toJson">toJson</button>
@@ -19,10 +19,6 @@
 </template>
 
 <script>
-// import Konva from "konva"
-// const width = window.innerWidth
-// const height = window.innerHeight
-
 export default {
   data() {
     return {
@@ -56,21 +52,33 @@ export default {
           draggable: true
         }
       ],
-      image: { image: null, name: "yoda", draggable: true, x: 300, y: 300, width: 100, height: 100 },
+      image: {
+        image: null,
+        name: "yoda",
+        draggable: true,
+        x: 300,
+        y: 300,
+        width: 100,
+        height: 100,
+        src: "https://konvajs.org/assets/yoda.jpg"
+      },
       selectedShapeName: ""
     }
   },
   computed: {
     stage() {
-      return this.$refs.stage?.getNode()
+      return this.$refs.stage.getNode()
     },
     transformer() {
-      return this.$refs.transformer?.getNode()
+      return this.$refs.transformer.getNode()
+    },
+    mainLayer() {
+      return this.$refs.layer.getNode()
     }
   },
   created() {
     const image = new Image()
-    image.src = "https://konvajs.org/assets/yoda.jpg"
+    image.src = this.image.src
     image.crossOrigin = "anonymous" // https://stackoverflow.com/questions/22710627/tainted-canvases-may-not-be-exported
     image.onload = () => {
       this.image.image = image
@@ -78,15 +86,8 @@ export default {
   },
   methods: {
     handleTransformEnd(e) {
-      const rect = this.rectangles.find(r => r.name === this.selectedShapeName)
-      rect.x = e.target.x()
-      rect.y = e.target.y()
-      rect.rotation = e.target.rotation()
-      rect.scaleX = e.target.scaleX()
-      rect.scaleY = e.target.scaleY()
-
-      // change fill
-      // rect.fill = Konva.Util.getRandomColor()
+      console.log("#@# handleTransformEnd", e)
+      this.toSnapshot()
     },
     handleStageMouseDown(e) {
       if (e.target === e.target.getStage()) {
@@ -109,6 +110,10 @@ export default {
       }
       this.updateTransformer()
     },
+    handleStageDragEnd(e) {
+      console.log("#@# handleStageDragEnd", e)
+      this.toSnapshot()
+    },
     updateTransformer() {
       const selectedNode = this.stage.findOne("." + this.selectedShapeName)
       if (selectedNode === this.transformer.node()) {
@@ -124,8 +129,8 @@ export default {
     clearTransformer() {
       this.transformer.nodes([])
     },
-    toJson() {
-      console.log("#@# toJson", this.stage.toJSON())
+    toSnapshot() {
+      localStorage.setItem("snapshot", this.mainLayer.toJSON())
     },
     makeImageAndDownload(uri, name) {
       const link = document.createElement("a")
