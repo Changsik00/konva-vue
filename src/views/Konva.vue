@@ -129,10 +129,11 @@ export default {
 
         if (!isExistTransformer) {
           this.transformer = new Konva.Transformer()
-          this.transformer.on("dragend", () => this.handleStageDragEnd())
-          this.transformer.on("transformend", () => this.handleTransformEnd())
-          this.mainLayer.add(this.transformer)
         }
+
+        this.transformer.on("dragend", () => this.handleStageDragEnd())
+        this.transformer.on("transformend", () => this.handleTransformEnd())
+        this.mainLayer.add(this.transformer)
       }
     },
     makeImageAndDownload(uri, name) {
