@@ -9,11 +9,9 @@
     >
       <v-layer ref="layer">
         <v-transformer @dragend="handleStageDragEnd" @transformend="handleTransformEnd" ref="transformer" />
-        <v-rect v-for="item in rectangles" :key="item.id" :config="item" />
-        <v-image :config="image" />
+        <v-shape v-for="shape in shapes" :key="shape.name" :config="shape"> </v-shape>
       </v-layer>
     </v-stage>
-    <button @click="toJson">toJson</button>
     <button @click="downloadImage">downloadImage</button>
   </section>
 </template>
@@ -26,43 +24,8 @@ export default {
         width: 1000,
         height: 500
       },
-      rectangles: [
-        {
-          rotation: 0,
-          x: 10,
-          y: 10,
-          width: 100,
-          height: 100,
-          scaleX: 1,
-          scaleY: 1,
-          fill: "red",
-          name: "rect1",
-          draggable: true
-        },
-        {
-          rotation: 0,
-          x: 150,
-          y: 150,
-          width: 100,
-          height: 100,
-          scaleX: 1,
-          scaleY: 1,
-          fill: "green",
-          name: "rect2",
-          draggable: true
-        }
-      ],
-      image: {
-        image: null,
-        name: "yoda",
-        draggable: true,
-        x: 300,
-        y: 300,
-        width: 100,
-        height: 100,
-        src: "https://konvajs.org/assets/yoda.jpg"
-      },
-      selectedShapeName: ""
+      selectedShapeName: "",
+      shapes: []
     }
   },
   computed: {
@@ -76,17 +39,35 @@ export default {
       return this.$refs.transformer.getNode()
     }
   },
-  created() {
-    const image = new Image()
-    image.src = this.image.src
-    image.crossOrigin = "anonymous" // https://stackoverflow.com/questions/22710627/tainted-canvases-may-not-be-exported
-    image.onload = () => {
-      this.image.image = image
-    }
+
+  mounted() {
+    this.init()
   },
   methods: {
-    handleTransformEnd(e) {
-      console.log("#@# handleTransformEnd", e)
+    init() {
+      const snapshot = this.getSnapshot()
+      if (snapshot) {
+        const shapes = JSON.parse(snapshot).children
+
+        this.shapes = shapes.map(shape => {
+          if (shape.className === "Image") {
+            // FIXME: v-shape 이용해서 한방에 끗?
+            const image = new Image()
+            image.src = shape.attrs.src
+            image.crossOrigin = "anonymous"
+            image.onload = () => {
+              shape.attrs.image = image
+            }
+          }
+          return shape
+        })
+        this.stage.draw()
+      }
+    },
+    handleTransformEnd() {
+      this.toSnapshot()
+    },
+    handleStageDragEnd() {
       this.toSnapshot()
     },
     handleStageMouseDown(e) {
@@ -110,10 +91,7 @@ export default {
       }
       this.updateTransformer()
     },
-    handleStageDragEnd(e) {
-      console.log("#@# handleStageDragEnd", e)
-      this.toSnapshot()
-    },
+
     updateTransformer() {
       const selectedNode = this.stage.findOne("." + this.selectedShapeName)
       if (selectedNode === this.transformer.node()) {
@@ -135,6 +113,9 @@ export default {
     },
     toSnapshot() {
       localStorage.setItem("snapshot", this.mainLayer.toJSON())
+    },
+    getSnapshot() {
+      return localStorage.getItem("snapshot")
     },
     makeImageAndDownload(uri, name) {
       const link = document.createElement("a")
