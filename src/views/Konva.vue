@@ -150,6 +150,7 @@ export default {
       this.makeImageAndDownload(dataURL, "image.png")
     },
     addText() {
+      // TODO: edit text https://konvajs.org/docs/sandbox/Editable_Text.html
       const shapeObj = new Konva.Text({
         x: this.stage.width() / 3,
         y: 15,
