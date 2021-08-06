@@ -45,14 +45,7 @@ export default {
   methods: {
     init() {
       this.mainLayer = new Konva.Layer()
-
-      this.transformer = new Konva.Transformer()
-      this.transformer.on("dragend", () => this.handleStageDragEnd())
-      this.transformer.on("transformend", () => this.handleTransformEnd())
-      this.mainLayer.add(this.transformer)
-
       this.recoverSnapshot()
-
       this.stage.add(this.mainLayer)
     },
     handleTransformEnd() {
@@ -111,11 +104,10 @@ export default {
       const snapshot = this.getSnapshot()
       if (snapshot) {
         const shapes = JSON.parse(snapshot).children
+        let isExistTransformer = false
         this.shapes = shapes.forEach(shape => {
           const { className, attrs } = shape
-          if (className === "Transformer") {
-            return
-          }
+
           if (className === "Image") {
             const image = new Image()
             image.src = attrs.src
@@ -127,10 +119,20 @@ export default {
           } else {
             const shapeObj = new Konva[className](attrs)
             this.mainLayer.add(shapeObj)
+
+            if (className === "Transformer") {
+              isExistTransformer = true
+              this.transformer = shapeObj
+            }
           }
         })
-        // FIXME: check redundant??
-        // this.stage.draw()
+
+        if (!isExistTransformer) {
+          this.transformer = new Konva.Transformer()
+          this.transformer.on("dragend", () => this.handleStageDragEnd())
+          this.transformer.on("transformend", () => this.handleTransformEnd())
+          this.mainLayer.add(this.transformer)
+        }
       }
     },
     makeImageAndDownload(uri, name) {
@@ -168,6 +170,8 @@ export default {
     },
     reset() {
       localStorage.setItem("snapshot", JSON.stringify(dummy))
+      this.mainLayer.children = []
+      this.recoverSnapshot()
     }
   }
 }
