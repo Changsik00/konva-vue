@@ -9,10 +9,14 @@
     >
     </v-stage>
     <button @click="downloadImage">downloadImage</button>
+    <button @click="addText">addText</button>
+    <button @click="changeColor">color</button>
+    <button @click="reset">reset</button>
   </section>
 </template>
 
 <script>
+import dummy from "../assets/js/dummy.json"
 import Konva from "konva"
 export default {
   data() {
@@ -22,6 +26,7 @@ export default {
         height: 500
       },
       selectedShapeName: "",
+      selectedNode: null,
       transformer: null,
       mainLayer: null
     }
@@ -29,6 +34,9 @@ export default {
   computed: {
     stage() {
       return this.$refs.stage.getNode()
+    },
+    nodeCount() {
+      return this.mainLayer.children.length - 1
     }
   },
   mounted() {
@@ -76,16 +84,16 @@ export default {
     },
 
     updateTransformer() {
-      const selectedNode = this.stage.findOne("." + this.selectedShapeName)
-      if (selectedNode === this.transformer.node()) {
+      this.selectedNode = this.stage.findOne("." + this.selectedShapeName)
+      if (this.selectedNode === this.transformer.node()) {
         return
       }
 
-      if (selectedNode) {
+      if (this.selectedNode) {
         const zIndex = this.mainLayer.children.length - 1
-        selectedNode.zIndex(zIndex)
+        this.selectedNode.zIndex(zIndex)
         this.transformer.zIndex(zIndex)
-        this.transformer.nodes([selectedNode])
+        this.transformer.nodes([this.selectedNode])
       } else {
         this.clearTransformer()
       }
@@ -94,7 +102,6 @@ export default {
       this.transformer.nodes([])
     },
     saveSnapshot() {
-      console.log("#@# saveSnapshot")
       localStorage.setItem("snapshot", this.mainLayer.toJSON())
     },
     getSnapshot() {
@@ -138,6 +145,29 @@ export default {
       this.clearTransformer()
       const dataURL = this.stage.toDataURL({ pixelRatio: 3 })
       this.makeImageAndDownload(dataURL, "image.png")
+    },
+    addText() {
+      const shapeObj = new Konva.Text({
+        x: this.stage.width() / 3,
+        y: 15,
+        text: "Simple Text",
+        fontSize: 30,
+        fontFamily: "Calibri",
+        fill: "green",
+        name: "text" + this.nodeCount,
+        draggable: true,
+        index: 4
+      })
+      this.mainLayer.add(shapeObj)
+    },
+    changeColor() {
+      if (this.selectedNode) {
+        this.selectedNode.attrs = { ...this.selectedNode.attrs, fill: "red" }
+        this.stage.draw()
+      }
+    },
+    reset() {
+      localStorage.setItem("snapshot", JSON.stringify(dummy))
     }
   }
 }
