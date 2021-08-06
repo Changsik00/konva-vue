@@ -8,9 +8,9 @@
       @touchstart="handleStageMouseDown"
     >
       <v-layer ref="layer">
-        <v-rect v-for="item in rectangles" :key="item.id" :config="item" @transformend="handleTransformEnd" />
-        <v-image :config="image" @transformend="handleTransformEnd" />
-        <v-transformer @dragend="handleStageDragEnd" ref="transformer" />
+        <v-transformer @dragend="handleStageDragEnd" @transformend="handleTransformEnd" ref="transformer" />
+        <v-rect v-for="item in rectangles" :key="item.id" :config="item" />
+        <v-image :config="image" />
       </v-layer>
     </v-stage>
     <button @click="toJson">toJson</button>
@@ -69,11 +69,11 @@ export default {
     stage() {
       return this.$refs.stage.getNode()
     },
-    transformer() {
-      return this.$refs.transformer.getNode()
-    },
     mainLayer() {
       return this.$refs.layer.getNode()
+    },
+    transformer() {
+      return this.$refs.transformer.getNode()
     }
   },
   created() {
@@ -121,6 +121,10 @@ export default {
       }
 
       if (selectedNode) {
+        const length = this.mainLayer.children.length
+        selectedNode.zIndex(length)
+        this.transformer.zIndex(length)
+
         this.transformer.nodes([selectedNode])
       } else {
         this.clearTransformer()
