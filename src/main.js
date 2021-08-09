@@ -4,7 +4,6 @@ import VueKonva from "vue-konva"
 import router from "./router"
 
 Vue.use(VueKonva)
-
 Vue.config.productionTip = false
 
 new Vue({

@@ -13,15 +13,28 @@
     <button @click="editableText">editableText</button>
     <button @click="changeColor">color</button>
     <button @click="reset">reset</button>
+    <Photoshop v-model="colors" />
   </section>
 </template>
 
 <script>
 import dummy from "../assets/js/dummy.json"
 import Konva from "konva"
+import { Photoshop } from "vue-color"
 export default {
+  components: {
+    Photoshop
+  },
   data() {
     return {
+      colors: {
+        hex: "#194d33",
+        hex8: "#194D33A8",
+        hsl: { h: 150, s: 0.5, l: 0.2, a: 1 },
+        hsv: { h: 150, s: 0.66, v: 0.3, a: 1 },
+        rgba: { r: 25, g: 77, b: 51, a: 1 },
+        a: 1
+      },
       stageSize: {
         width: 1000,
         height: 500
@@ -41,6 +54,10 @@ export default {
     }
   },
   mounted() {
+    const container = this.stage.container()
+    container.tabIndex = 0
+    container.addEventListener("keydown", e => this.handleStageKeydown(e))
+    container.focus()
     this.init()
   },
   methods: {
@@ -78,8 +95,6 @@ export default {
     },
 
     updateTransformer() {
-      console.log("#@# updateTransformer", this.selectedShapeName)
-
       this.selectedNode = this.stage.findOne("." + this.selectedShapeName)
       if (this.selectedNode === this.transformer.node()) {
         return
@@ -98,7 +113,6 @@ export default {
       this.transformer.nodes([])
     },
     saveSnapshot() {
-      console.log("#@# saveSnapshot", this.mainLayer.toJSON())
       localStorage.setItem("snapshot", this.mainLayer.toJSON())
     },
     getSnapshot() {
@@ -175,7 +189,7 @@ export default {
     },
     changeColor() {
       if (this.selectedNode) {
-        this.selectedNode.attrs = { ...this.selectedNode.attrs, fill: "red" }
+        this.selectedNode.attrs = { ...this.selectedNode.attrs, fill: this.colors.hex }
         this.stage.draw()
       }
     },
@@ -329,6 +343,18 @@ export default {
       })
 
       this.mainLayer.add(textNode)
+    },
+
+    handleStageKeydown(e) {
+      // e.key === "Backspace"
+      if (e.keyCode === 8) {
+        this.mainLayer.children = this.mainLayer.children.filter(d => d !== this.selectedNode)
+        this.clearTransformer()
+        this.stage.draw()
+        this.saveSnapshot()
+      }
+
+      e.preventDefault()
     }
   }
 }
