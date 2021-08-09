@@ -10,6 +10,7 @@
     </v-stage>
     <button @click="downloadImage">downloadImage</button>
     <button @click="addText">addText</button>
+    <button @click="editableText">editableText</button>
     <button @click="changeColor">color</button>
     <button @click="reset">reset</button>
   </section>
@@ -77,6 +78,8 @@ export default {
     },
 
     updateTransformer() {
+      console.log("#@# updateTransformer", this.selectedShapeName)
+
       this.selectedNode = this.stage.findOne("." + this.selectedShapeName)
       if (this.selectedNode === this.transformer.node()) {
         return
@@ -95,6 +98,7 @@ export default {
       this.transformer.nodes([])
     },
     saveSnapshot() {
+      console.log("#@# saveSnapshot", this.mainLayer.toJSON())
       localStorage.setItem("snapshot", this.mainLayer.toJSON())
     },
     getSnapshot() {
@@ -117,12 +121,15 @@ export default {
               this.mainLayer.add(konvaImage)
             }
           } else {
-            const shapeObj = new Konva[className](attrs)
-            this.mainLayer.add(shapeObj)
-
-            if (className === "Transformer") {
-              isExistTransformer = true
-              this.transformer = shapeObj
+            if (attrs.name?.startsWith("editable-text")) {
+              this.addEditableTextNode(attrs)
+            } else {
+              const shapeObj = new Konva[className](attrs)
+              this.mainLayer.add(shapeObj)
+              if (className === "Transformer") {
+                isExistTransformer = true
+                this.transformer = shapeObj
+              }
             }
           }
         })
@@ -150,7 +157,6 @@ export default {
       this.makeImageAndDownload(dataURL, "image.png")
     },
     addText() {
-      // TODO: edit text https://konvajs.org/docs/sandbox/Editable_Text.html
       const shapeObj = new Konva.Text({
         x: this.stage.width() / 3,
         y: 15,
@@ -164,6 +170,9 @@ export default {
       })
       this.mainLayer.add(shapeObj)
     },
+    editableText() {
+      this.addEditableTextNode()
+    },
     changeColor() {
       if (this.selectedNode) {
         this.selectedNode.attrs = { ...this.selectedNode.attrs, fill: "red" }
@@ -174,6 +183,152 @@ export default {
       localStorage.setItem("snapshot", JSON.stringify(dummy))
       this.mainLayer.children = []
       this.recoverSnapshot()
+    },
+    addEditableTextNode(attr) {
+      // https://konvajs.org/docs/sandbox/Editable_Text.html
+      const textNode = new Konva.Text(
+        attr ?? {
+          text: "Some text here",
+          x: 50,
+          y: 80,
+          fontSize: 20,
+          draggable: true,
+          width: 200,
+          name: "editable-text" + this.nodeCount
+        }
+      )
+
+      textNode.on("transform", function() {
+        // reset scale, so only with is changing by transformer
+        textNode.setAttrs({
+          width: textNode.width() * textNode.scaleX(),
+          scaleX: 1
+        })
+      })
+      textNode.on("dblclick dbltap", () => {
+        // hide text node and transformer:
+        textNode.hide()
+
+        // create textarea over canvas with absolute position
+        // first we need to find position for textarea
+        // how to find it?
+
+        // at first lets find position of text node relative to the stage:
+        const textPosition = textNode.absolutePosition()
+
+        // so position of textarea will be the sum of positions above:
+        const areaPosition = {
+          x: this.stage.container().offsetLeft + textPosition.x,
+          y: this.stage.container().offsetTop + textPosition.y
+        }
+
+        // create textarea and style it
+        const textarea = document.createElement("textarea")
+        document.body.appendChild(textarea)
+
+        // apply many styles to match text on canvas as close as possible
+        // remember that text rendering on canvas and on the textarea can be different
+        // and sometimes it is hard to make it 100% the same. But we will try...
+        textarea.value = textNode.text()
+        textarea.style.position = "absolute"
+        textarea.style.top = areaPosition.y + "px"
+        textarea.style.left = areaPosition.x + "px"
+        textarea.style.width = textNode.width() - textNode.padding() * 2 + "px"
+        textarea.style.height = textNode.height() - textNode.padding() * 2 + 5 + "px"
+        textarea.style.fontSize = textNode.fontSize() + "px"
+        textarea.style.border = "none"
+        textarea.style.padding = "0px"
+        textarea.style.margin = "0px"
+        textarea.style.overflow = "hidden"
+        textarea.style.background = "none"
+        textarea.style.outline = "none"
+        textarea.style.resize = "none"
+        textarea.style.lineHeight = textNode.lineHeight()
+        textarea.style.fontFamily = textNode.fontFamily()
+        textarea.style.transformOrigin = "left top"
+        textarea.style.textAlign = textNode.align()
+        textarea.style.color = textNode.fill()
+        const rotation = textNode.rotation()
+        let transform = ""
+        if (rotation) {
+          transform += "rotateZ(" + rotation + "deg)"
+        }
+
+        let px = 0
+        // also we need to slightly move textarea on firefox
+        // because it jumps a bit
+        const isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+        if (isFirefox) {
+          px += 2 + Math.round(textNode.fontSize() / 20)
+        }
+        transform += "translateY(-" + px + "px)"
+
+        textarea.style.transform = transform
+
+        // reset height
+        textarea.style.height = "auto"
+        // after browsers resized it we can set actual value
+        textarea.style.height = textarea.scrollHeight + 3 + "px"
+
+        textarea.focus()
+
+        function removeTextarea() {
+          textarea.parentNode.removeChild(textarea)
+          window.removeEventListener("click", handleOutsideClick)
+          textNode.show()
+        }
+
+        function setTextareaWidth(newWidth) {
+          if (!newWidth) {
+            // set width for placeholder
+            newWidth = textNode.placeholder.length * textNode.fontSize()
+          }
+          // some extra fixes on different browsers
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+          const isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+          if (isSafari || isFirefox) {
+            newWidth = Math.ceil(newWidth)
+          }
+
+          const isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
+          if (isEdge) {
+            newWidth += 1
+          }
+          textarea.style.width = newWidth + "px"
+        }
+
+        textarea.addEventListener("keydown", function(e) {
+          // hide on enter
+          // but don't hide on shift + enter
+          if (e.keyCode === 13 && !e.shiftKey) {
+            textNode.text(textarea.value)
+            removeTextarea()
+          }
+          // on esc do not set value back to node
+          if (e.keyCode === 27) {
+            removeTextarea()
+          }
+        })
+
+        textarea.addEventListener("keydown", function() {
+          const scale = textNode.getAbsoluteScale().x
+          setTextareaWidth(textNode.width() * scale)
+          textarea.style.height = "auto"
+          textarea.style.height = textarea.scrollHeight + textNode.fontSize() + "px"
+        })
+
+        function handleOutsideClick(e) {
+          if (e.target !== textarea) {
+            textNode.text(textarea.value)
+            removeTextarea()
+          }
+        }
+        setTimeout(() => {
+          window.addEventListener("click", handleOutsideClick)
+        })
+      })
+
+      this.mainLayer.add(textNode)
     }
   }
 }
