@@ -320,15 +320,20 @@ export default {
     },
 
     handleStageKeydown(e) {
-      // e.key === "Backspace"
-      if (e.keyCode === 8) {
-        this.mainLayer.children = this.mainLayer.children.filter(d => d !== this.selectedNode)
-        this.clearTransformer()
-        this.stage.draw()
-        this.saveSnapshot()
+      switch (e.key) {
+        case "Backspace":
+          this.mainLayer.children = this.mainLayer.children.filter(d => d !== this.selectedNode)
+          this.clearTransformer()
+          this.stage.draw()
+          this.saveSnapshot()
+          break
+        case (e.ctrlKey || e.metaKey) && e.shiftKey && "z":
+          console.log("#@# redo")
+          break
+        case (e.ctrlKey || e.metaKey) && "z":
+          console.log("#@# undo")
+          break
       }
-
-      e.preventDefault()
     }
   }
 }
